@@ -1,15 +1,17 @@
 import boto3
 from botocore.exceptions import ClientError
 
-def log_capture(write_text):
-    # S3 file path where you want to write the text
-    s3_file = "s3://bucket_test_name/logpath/log.txt"
+def log_capture(file_name, write_text):
+    # S3 bucket where you want to write the text
+    bucket_name = "bucket_test_name"
+
+    # S3 key (path) where you want to write the text
+    key = f"logpath/{file_name}.txt"
+
+    # S3 file path
+    s3_file = f"s3://{bucket_name}/{key}"
     
-    # Parse bucket and key from S3 file path
-    bucket_name = s3_file.split('/')[2]
-    key = '/'.join(s3_file.split('/')[3:])
-    
-    # Initialize S3 client using default EMR credentials
+    # Initialize S3 client
     s3 = boto3.client('s3')
     
     try:
@@ -17,7 +19,9 @@ def log_capture(write_text):
         response = s3.head_object(Bucket=bucket_name, Key=key)
         
         # If the file exists, append text to it
-        s3.put_object(Bucket=bucket_name, Key=key, Body=response['Body'].read().decode('utf-8') + '\n' + write_text)
+        existing_text = response['Body'].read().decode('utf-8')
+        new_text = existing_text + '\n' + write_text
+        s3.put_object(Bucket=bucket_name, Key=key, Body=new_text)
         print("Text appended to existing file:", s3_file)
     except ClientError as e:
         # If the file does not exist, create a new file and write text to it
@@ -28,5 +32,6 @@ def log_capture(write_text):
             print("An error occurred:", e)
 
 # Example usage
+file_name = "log"  # Variable containing the name of the file
 write_text = "comment check here"
-log_capture(write_text)
+log_capture(file_name, write_text)
