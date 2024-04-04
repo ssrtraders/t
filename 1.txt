@@ -24,12 +24,13 @@ def log_capture(file_name, write_text):
         s3.put_object(Bucket=bucket_name, Key=key, Body=new_text)
         print("Text appended to existing file:", s3_file)
     except ClientError as e:
-        # If the file does not exist, create a new file and write text to it
         if e.response['Error']['Code'] == '404':
+            # If the file does not exist, create a new file and write text to it
             s3.put_object(Bucket=bucket_name, Key=key, Body=write_text)
             print("Text written to new file:", s3_file)
         else:
-            print("An error occurred:", e)
+            # If the error is not due to file not found, raise it
+            raise e
 
 # Example usage
 file_name = "log"  # Variable containing the name of the file
